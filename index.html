@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StyleMuse | Fashion Intelligence</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-pastel: #f4e4e1; /* Dusty Rose / Pastel Pink */
+            --bg-accent: #e9d5d2; 
+            --text-main: #4a3f3d; 
+        }
+
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: var(--bg-pastel); 
+            color: var(--text-main); 
+            margin: 0;
+            transition: background 0.5s ease;
+        }
+
+        h1, h2, .serif { font-family: 'Playfair Display', serif; }
+
+        .page { display: none; min-height: 100vh; padding: 2rem; width: 100%; }
+        .active { display: flex; flex-direction: column; justify-content: center; align-items: center; }
+
+        .btn { 
+            border: 1px solid var(--text-main); 
+            padding: 12px 28px; 
+            letter-spacing: 2px; 
+            transition: 0.4s ease; 
+            cursor: pointer; 
+            text-transform: uppercase; 
+            font-size: 0.75rem; 
+            background: transparent;
+            margin-top: 20px;
+        }
+
+        .btn:hover { 
+            background: var(--text-main); 
+            color: #fff; 
+        }
+
+        .quiz-option { 
+            border: 1px solid rgba(74, 63, 61, 0.2); 
+            padding: 18px; 
+            width: 100%; 
+            max-width: 420px; 
+            margin-bottom: 12px; 
+            cursor: pointer; 
+            text-align: center; 
+            background: rgba(255, 255, 255, 0.4); 
+            backdrop-filter: blur(5px);
+            transition: 0.3s;
+        }
+
+        .quiz-option:hover { 
+            border-color: var(--text-main); 
+            background: rgba(255, 255, 255, 0.7);
+        }
+
+        .searchable-item { 
+            border-bottom: 1.5px solid var(--text-main); 
+            cursor: pointer; 
+            display: inline-block; 
+            margin: 6px; 
+            padding: 2px 4px; 
+            font-weight: 600; 
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .searchable-item:hover { 
+            background-color: var(--text-main);
+            color: #fff;
+        }
+
+        @media (max-width: 640px) {
+            h1 { font-size: 2.2rem !important; }
+            .page { padding: 1rem; }
+            .quiz-option { padding: 14px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="page1" class="page active text-center">
+    <h1 class="text-5xl md:text-7xl mb-3">StyleMuse</h1>
+    <p class="serif italic text-xl mb-10 opacity-80">Every frame tells a fashion story.</p>
+    <div class="max-w-md mx-auto mb-12 text-sm leading-relaxed opacity-70 tracking-wide px-4">
+        "A minimalist fashion intelligence platform designed to decode body shapes and curate personalized wardrobes through structured style intelligence."
+    </div>
+    <button class="btn" onclick="showPage('page2')">Decode Your Frame</button>
+</div>
+
+<div id="page2" class="page">
+    <div id="quiz-container" class="w-full max-w-lg mx-auto flex flex-col items-center px-4">
+        <span class="text-[10px] uppercase tracking-[0.3em] mb-6 opacity-60 text-center">Step <span id="q-number">1</span> of 6</span>
+        <h2 id="question-text" class="text-2xl md:text-3xl mb-10 text-center leading-snug">Decoding your frame...</h2>
+        <div id="options" class="w-full flex flex-col items-center"></div>
+    </div>
+</div>
+
+<div id="page3" class="page text-center" style="background-color: var(--bg-accent);">
+    <span class="text-[10px] uppercase tracking-[0.4em] mb-6 opacity-60">Analysis Complete</span>
+    <h1 id="result-title" class="text-5xl md:text-6xl mb-6">Result</h1>
+    <p id="result-sub" class="serif italic text-xl md:text-2xl mb-8">Subheadline</p>
+    <p id="result-desc" class="max-w-md mx-auto opacity-70 mb-12 text-sm leading-relaxed px-4">Description</p>
+    <button class="btn" onclick="showPage('page4')">View My Wardrobe Guide</button>
+</div>
+
+<div id="page4" class="page">
+    <div class="max-w-2xl mx-auto w-full px-4 py-10">
+        <h2 class="text-4xl mb-2 serif">The Curated Essentials</h2>
+        <p class="text-[10px] opacity-50 mb-10 uppercase tracking-[0.2em]">Double-tap an item to see styling examples</p>
+        
+        <div id="wardrobe-content" class="space-y-12">
+        </div>
+        
+        <button class="btn mt-20 block mx-auto border-opacity-30 text-[10px]" onclick="location.reload()">Reset Analysis</button>
+    </div>
+</div>
+
+<script>
+    let scores = { H: 0, P: 0, I: 0, R: 0, A: 0 };
+    let currentQ = 0;
+
+    const questions = [
+        {
+            q: "How would you describe your overall body shape?",
+            options: [
+                { text: "Balanced shoulders & hips with a defined waist", score: {H: 2} },
+                { text: "Hips wider than shoulders", score: {P: 2} },
+                { text: "Broader shoulders than hips", score: {I: 2} },
+                { text: "Straight body, little curve", score: {R: 2} },
+                { text: "More weight around midsection", score: {A: 2} }
+            ]
+        },
+        {
+            q: "How defined is your waist?",
+            options: [
+                { text: "Very defined", score: {H: 2} },
+                { text: "Slightly defined", score: {P: 1, R: 1} },
+                { text: "Not defined", score: {A: 2} },
+                { text: "Almost straight", score: {R: 2} },
+                { text: "Fuller around waist", score: {A: 2} }
+            ]
+        },
+        {
+            q: "Where do you gain weight first?",
+            options: [
+                { text: "Hips & thighs", score: {P: 2} },
+                { text: "Belly area", score: {A: 2} },
+                { text: "Upper body (shoulders/arms)", score: {I: 2} },
+                { text: "Evenly all over", score: {H: 2} },
+                { text: "Hardly noticeable / evenly straight", score: {R: 2} }
+            ]
+        },
+        {
+            q: "Your shoulder width compared to hips?",
+            options: [
+                { text: "Same width", score: {H: 2, R: 1} },
+                { text: "Narrower than hips", score: {P: 2} },
+                { text: "Wider than hips", score: {I: 2} },
+                { text: "Slightly broader", score: {I: 1, A: 1} },
+                { text: "Slightly narrower", score: {P: 1, H: 1} }
+            ]
+        },
+        {
+            q: "What type of clothes fit you best naturally?",
+            options: [
+                { text: "Fitted at waist", score: {H: 2} },
+                { text: "Loose around hips, fitted top", score: {P: 2} },
+                { text: "Loose around stomach", score: {A: 2} },
+                { text: "Straight fits", score: {R: 2} },
+                { text: "Fitted bottom, loose top", score: {I: 2} }
+            ]
+        },
+        {
+            q: "How do dresses usually fit you?",
+            options: [
+                { text: "Perfectly fitted with waist definition", score: {H: 2} },
+                { text: "Tight on hips, loose on top", score: {P: 2} },
+                { text: "Tight on stomach area", score: {A: 2} },
+                { text: "Straight fit everywhere", score: {R: 2} },
+                { text: "Tight on top, loose at bottom", score: {I: 2} }
+            ]
+        }
+    ];
+
+    const bodyTypeInfo = {
+        I: {
+            name: "Inverted Triangle",
+            sub: "Soften the shoulders, add volume below.",
+            desc: "Broad shoulders and slim hips give you an athletic, striking look. We focus on adding volume to your lower body with flares and tiers to create a balanced, harmonious silhouette.",
+            items: { 
+                Western: ["Flare Jeans", "Wide-leg Jeans", "Tiered Skirts", "A-line Skirts", "Peplum Tops", "V-neck Tops", "Vertical Striped Shirts", "Halter Neck Dresses", "Fit and Flare Dresses"], 
+                Ethnic: ["Ruffled Sarees", "Heavy Border Lehengas", "Patiala Salwar Suits", "Multi-layered Shararas", "Ghararas"], 
+                Formal: ["Button-down V-neck Shirts", "Wide-leg Formal Pants", "Pleated Trousers", "A-line Formal Skirts", "Peplum Blazers"],
+                Party: ["Mini Dresses with Flared Hems", "Shimmer Skater Dresses", "Cut-out Bodycon Dresses", "Ball Gowns"],
+                Casual: ["V-neck Tees", "Cargo Joggers", "Graphic T-shirts", "Ruffled Shorts", "Flare Leggings", "Tiered Maxi Dresses"] 
+            }
+        },
+        P: {
+            name: "Pear Shape",
+            sub: "Draw the eye upward, streamline the base.",
+            desc: "With hips wider than your shoulders, your frame is naturally feminine. We focus on structured tops, bold necklines, and clean lines on the bottom to balance your proportions.",
+            items: { 
+                Western: ["Straight-leg Jeans", "Bootcut Jeans", "Pencil Skirts", "A-line Skirts", "Off-shoulder Tops", "Puffed Sleeve Tops", "Structured Button-up Shirts", "Boat Neck Dresses", "Empire Waist Dresses"], 
+                Ethnic: ["Stiff Organza Sarees", "A-line Lehengas", "Anarkali Salwar Suits", "Straight-cut Shararas", "Heavy Dupatta Sets"], 
+                Formal: ["Strong-shouldered Shirts", "Straight-cut Pants", "Bootcut Trousers", "Structure Pencil Skirts", "Double-breasted Blazers"],
+                Party: ["Embellished Mini Dresses", "One-shoulder Shimmer Dresses", "Fitted Bodycon Dresses", "A-line Gowns"],
+                Casual: ["Boat-neck Tees", "Slim-fit Joggers", "Padded-shoulder T-shirts", "High-waisted Shorts", "Dark-wash Leggings", "A-line Maxi Dresses"] 
+            }
+        },
+        H: {
+            name: "Hourglass",
+            sub: "Honor the curve, define the center.",
+            desc: "Your shoulders and hips are perfectly balanced with a naturally narrow waist. Our goal is to highlight your silhouette using fitted cuts that follow your natural curves.",
+            items: { 
+                Western: ["High-waisted Skinny Jeans", "Cigarette Jeans", "High-waisted Pencil Skirts", "Tulip Skirts", "Wrap Tops", "Fitted Sweetheart Tops", "Tailored Silk Shirts", "Wrap Dresses", "Bodycon Dresses"], 
+                Ethnic: ["Chiffon/Georgette Sarees", "Fish-cut Lehengas", "Fitted Kurta Salwar Suits", "Sleek Sharara Sets", "Belted Sarees"], 
+                Formal: ["Fitted Formal Shirts", "Tapered Pants", "High-waist Trousers", "Fitted Slit Skirts", "Single-button Blazers"],
+                Party: ["Plunging Mini Dresses", "Metallic Shimmer Dresses", "Classic Bodycon Dresses", "Mermaid Gowns"],
+                Casual: ["Fitted Tees", "High-rise Joggers", "Crop T-shirts", "Cyclist Shorts", "High-waist Leggings", "Belted Maxi Dresses"] 
+            }
+        },
+        R: {
+            name: "Rectangle",
+            sub: "Create the curve, break the line.",
+            desc: "Your silhouette is sleek and athletic. We use architectural shapes, ruffles, and strategic layering to add dimension and simulate a feminine, curved midsection.",
+            items: { 
+                Western: ["Cargo Jeans", "Mom Jeans", "Tiered Skirts", "Pleated Skirts", "Ruffled Tops", "Sweetheart Neck Tops", "Pocketed Safari Shirts", "Cut-out Dresses", "A-line Dresses"], 
+                Ethnic: ["Multi-layered Shararas", "Heavy Silk Sarees", "Peplum-style Salwar Suits", "Ruffled Lehengas", "Angrakha Kurtas"], 
+                Formal: ["Ruffled Formal Shirts", "Pleated Formal Pants", "Paper-bag Waist Trousers", "Tiered Formal Skirts", "Belted Blazers"],
+                Party: ["Tiered Mini Dresses", "Sequin Cut-out Dresses", "Side-ruched Bodycon Dresses", "Layered Tulle Gowns"],
+                Casual: ["Puff-sleeve Tees", "Cargo Joggers", "Boxy T-shirts", "Paper-bag Shorts", "Printed Leggings", "Tiered Maxi Dresses"] 
+            }
+        },
+        A: {
+            name: "Apple Shape",
+            sub: "Elongate the frame, showcase the limbs.",
+            desc: "With a fuller midsection and great legs, your style intelligence focuses on vertical lines, V-necklines, and airy fabrics that flow away from the torso.",
+            items: { 
+                Western: ["Straight-leg Jeans", "Boyfriend Jeans", "A-line Skirts", "Straight Skirts", "V-neck Flowy Tops", "Empire Waist Tops", "Longline Tunic Shirts", "Shift Dresses", "Empire Waist Dresses"], 
+                Ethnic: ["Cotton/Linen Sarees", "Straight-cut Lehengas", "Straight Salwar Suits", "Flowy Shararas", "Kaftan-style Kurtis"], 
+                Formal: ["V-neck Silk Shirts", "Straight-leg Formal Pants", "Flat-front Trousers", "A-line Formal Skirts", "Open-front Blazers"],
+                Party: ["V-neck Mini Dresses", "Shift Shimmer Dresses", "Ruched Bodycon Dresses", "Empire Waist Gowns"],
+                Casual: ["V-neck Tees", "Straight-leg Joggers", "Oversized T-shirts", "Mid-rise Shorts", "Compression Leggings", "Column Maxi Dresses"] 
+            }
+        }
+    };
+
+    function showPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+        window.scrollTo(0,0);
+        if (pageId === 'page2') loadQuestion();
+    }
+
+    function loadQuestion() {
+        const qData = questions[currentQ];
+        document.getElementById('q-number').innerText = currentQ + 1;
+        document.getElementById('question-text').innerText = qData.q;
+        const optionsDiv = document.getElementById('options');
+        optionsDiv.innerHTML = '';
+        
+        qData.options.forEach(opt => {
+            const div = document.createElement('div');
+            div.className = 'quiz-option';
+            div.innerText = opt.text;
+            div.onclick = () => handleAnswer(opt.score);
+            optionsDiv.appendChild(div);
+        });
+    }
+
+    function handleAnswer(score) {
+        for (let type in score) { scores[type] += score[type]; }
+        currentQ++;
+        if (currentQ < questions.length) {
+            loadQuestion();
+        } else {
+            calculateResult();
+        }
+    }
+
+    function calculateResult() {
+        let maxScore = -1;
+        let bodyType = 'H';
+        for (let type in scores) {
+            if (scores[type] > maxScore) {
+                maxScore = scores[type];
+                bodyType = type;
+            }
+        }
+        
+        const info = bodyTypeInfo[bodyType];
+        document.getElementById('result-title').innerText = info.name;
+        document.getElementById('result-sub').innerText = info.sub;
+        document.getElementById('result-desc').innerText = info.desc;
+        
+        const wardrobeDiv = document.getElementById('wardrobe-content');
+        wardrobeDiv.innerHTML = '';
+        
+        for (let category in info.items) {
+            let catHtml = `<div><h3 class="text-[10px] uppercase tracking-[0.3em] opacity-40 mb-4 border-b border-black border-opacity-10 pb-1">${category}</h3><div class="flex flex-wrap">`;
+            info.items[category].forEach(item => {
+                catHtml += `<span class="searchable-item" ondblclick="searchItem('${item}', '${info.name}')" ontouchstart="handleTouch('${item}', '${info.name}')">${item}</span>`;
+            });
+            catHtml += `</div></div>`;
+            wardrobeDiv.innerHTML += catHtml;
+        }
+        
+        showPage('page3');
+    }
+
+    let lastTap = 0;
+    function handleTouch(item, type) {
+        let now = new Date().getTime();
+        let timesince = now - lastTap;
+        if ((timesince < 300) && (timesince > 0)) {
+            searchItem(item, type);
+        }
+        lastTap = now;
+    }
+
+    function searchItem(item, type) {
+        const query = encodeURIComponent(`how to style ${item} for ${type} body shape`);
+        window.open(`https://www.google.com/search?q=${query}`, '_blank');
+    }
+</script>
+
+</body>
+</html>
